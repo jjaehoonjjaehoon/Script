@@ -1,0 +1,24 @@
+# VM 이름 목록
+$vmNames = @("VM-Name1", "VM-Name2")
+
+# 리소스 그룹 이름
+$resourceGroupName = "ResourceGroupName"
+
+# 각 VM에 대해 OS 디스크 스냅샷 생성
+foreach ($vmName in $vmNames) {
+    # VM 정보 가져오기
+    $vm = Get-AzVM -ResourceGroupName $resourceGroupName -Name $vmName
+    
+    # OS 디스크 정보 가져오기
+    $osDisk = $vm.StorageProfile.OsDisk
+    $osDiskName = $osDisk.Name
+    $snapshotName = "$osDiskName-snapshot"
+    
+    # 스냅샷 구성
+    $snapshotConfig = New-AzSnapshotConfig -SourceUri $osDisk.ManagedDisk.Id -Location $vm.Location -CreateOption Copy
+    
+    # 스냅샷 생성
+    New-AzSnapshot -ResourceGroupName $resourceGroupName -SnapshotName $snapshotName -Snapshot $snapshotConfig
+}
+
+Write-Output "OS 디스크 스냅샷 생성이 완료되었습니다."
