@@ -1,0 +1,37 @@
+Set-AzContext -Subscription "구독 명"
+
+$routeTable = Get-AzRouteTable `
+  -ResourceGroupName "리소스 그룹 명" `
+  -Name "RT이름"
+
+$routes = @(
+    @{
+        Name             = "route-rule01"
+        AddressPrefix    = "10.10.1.0/24"
+        NextHopType      = "VirtualAppliance"
+        NextHopIpAddress = "10.0.0.4"
+    },
+    @{
+        Name             = "route-rule02"
+        AddressPrefix    = "10.10.2.0/24"
+        NextHopType      = "VirtualAppliance"
+        NextHopIpAddress = "10.0.0.4"
+    },
+    @{
+        Name             = "route-rule03"
+        AddressPrefix    = "10.10.3.0/24"
+        NextHopType      = "VirtualAppliance"
+        NextHopIpAddress = "10.0.0.4"
+    }
+)
+
+foreach ($route in $routes) {
+    $routeTable = Add-AzRouteConfig `
+        -RouteTable $routeTable `
+        -Name $route.Name `
+        -AddressPrefix $route.AddressPrefix `
+        -NextHopType $route.NextHopType `
+        -NextHopIpAddress $route.NextHopIpAddress
+}
+
+$routeTable | Set-AzRouteTable
