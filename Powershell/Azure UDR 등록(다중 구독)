@@ -1,35 +1,36 @@
-Set-AzContext -Subscription "구독명1"
+
+Set-AzContext -Subscription "구독 명1"
 
 Get-AzRouteTable `
-  -ResourceGroupName "리소스 그룹 이름" `
+  -ResourceGroupName "리소스 그룹 명" `
   -Name "RT 이름" `
   | Add-AzRouteConfig `
-  -Name "RT 내 신규 규칙 명" `
-  -AddressPrefix 0.0.0.0/32 (주소 접두사) `
-  -NextHopType "다음 홉 형식" `
-  -NextHopIpAddress 0.0.0.0(다음 홉 IP 주소소) `
+  -Name "route-rule01" ` #RT 내 신규 규칙 명
+  -AddressPrefix 10.0.1.0/24 ` #주소 접두시
+  -NextHopType "VirtualAppliance" ` #다음 홉 형식
+  -NextHopIpAddress 10.0.2.0/24 ` #(다음 홉 IP 주소소)
 | Set-AzRouteTable
 
 Set-AzContext -Subscription "구독명2"
 
 Get-AzRouteTable `
-  -ResourceGroupName "리소스 그룹 이름" `
+  -ResourceGroupName "리소스 그룹 명" `
   -Name "RT 이름" `
   | Add-AzRouteConfig `
-  -Name "RT 내 신규 규칙 명" `
-  -AddressPrefix 0.0.0.0/32 (주소 접두사) `
-  -NextHopType "다음 홉 형식" `
-  -NextHopIpAddress 0.0.0.0(다음 홉 IP 주소소) `
+  -Name "route-rule01" ` #RT 내 신규 규칙 명
+  -AddressPrefix 10.0.1.0/24 ` #주소 접두시
+  -NextHopType "VirtualAppliance" ` #다음 홉 형식
+  -NextHopIpAddress 10.0.2.0/24 ` #(다음 홉 IP 주소소)
 | Set-AzRouteTable
 
 Set-AzContext -Subscription "구독명3"
 
 Get-AzRouteTable `
-  -ResourceGroupName "리소스 그룹 이름" `
+  -ResourceGroupName "리소스 그룹 명" `
   -Name "RT 이름" `
   | Add-AzRouteConfig `
-  -Name "RT 내 신규 규칙 명" `
-  -AddressPrefix 0.0.0.0/32 (주소 접두사) `
-  -NextHopType "다음 홉 형식" `
-  -NextHopIpAddress 0.0.0.0(다음 홉 IP 주소소) `
+  -Name "route-rule01" ` #RT 내 신규 규칙 명
+  -AddressPrefix 10.0.1.0/24 ` #주소 접두시
+  -NextHopType "VirtualAppliance" ` #다음 홉 형식
+  -NextHopIpAddress 10.0.2.0/24 ` #다음 홉 IP 주소소
 | Set-AzRouteTable
