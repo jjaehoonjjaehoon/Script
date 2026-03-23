@@ -1,0 +1,123 @@
+import os
+import sys
+import json
+import requests
+import paramiko
+from datetime import datetime, timedelta
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    SFTP_HOST = "HostName"
+    SFTP_PORT = 22
+    SFTP_USERNAME = "UserName"
+    SFTP_PASSWORD = "PassWord"
+    SFTP_LOG_PATH = "PATH"
+
+    today = datetime.now()
+    dates = [(today - timedelta(days=i)).strftime('%Y%m%d') for i in range(7)]
+    print(f"검색할 날짜: {dates[0]} ~ {dates[-1]}")
+
+        "업데이트 파일 URL"
+    )
+    updated_date = None
+    json_file_path = None
+
+    for date in dates:
+        url = base_url.format(date)
+        try:
+            head = requests.head(url, timeout=10)
+        except Exception as e:
+            print(f"HEAD 요청 실패 [{date}]: {e}")
+            continue
+        if head.status_code == 200:
+            print(f"{date} 파일이 존재함: {url}")
+            updated_date = date
+            json_file_path = f"ServiceTags_Public_{date}.json"
+            try:
+                resp = requests.get(url, timeout=30)
+                with open(json_file_path, "wb") as f:
+                    f.write(resp.content)
+                print(f"JSON 파일 다운로드 완료: {json_file_path}")
+            except Exception as e:
+                print(f"JSON 다운로드 실패: {e}")
+            break
+        else:
+            print(f"{date} 파일 없음.")
+
+    if not updated_date:
+        print("최신 JSON 파일 없음. 실행하지 않음.")
+        input("Press Enter to exit")
+        sys.exit()
+
+    def check_sftp_log_exists(date):
+        try:
+            transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+            transport.connect(username=SFTP_USERNAME, password=SFTP_PASSWORD)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            log_path = SFTP_LOG_PATH.format(date=date)
+            try:
+                sftp.stat(log_path)
+                print(f"SFTP에 로그 파일 존재: {log_path}")
+                return True
+            except FileNotFoundError:
+                print(f"SFTP에 해당 로그 파일 없음: {log_path}")
+                return False
+            finally:
+                sftp.close()
+                transport.close()
+        except Exception as e:
+            print(f"SFTP 연결 오류: {e}")
+            return False
+
+    def extract_ipv4_addresses(json_path, target_ids):
+        with open(json_path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+        ipv4_dict = {}
+        for item in data.get("values", []):
+            if item.get("id") in target_ids:
+                prefixes = item.get("properties", {}).get("addressPrefixes", [])
+                ips = [ip.strip() for ip in prefixes if isinstance(ip, str) and "." in ip]
+                if ips:
+                    ipv4_dict[item["id"]] = ips
+        return ipv4_dict
+
+    def save_to_sftp(ipv4_dict, date_str):
+        try:
+            transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+            transport.connect(username=SFTP_USERNAME, password=SFTP_PASSWORD)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            for id, ips in ipv4_dict.items():
+                remote_file_path = f"/logs/web/{id}_{date_str}.txt"
+                content = "\n".join(ips)  # 마지막 빈 줄 제거
+                print(f"업로드 시도: {remote_file_path}")
+                try:
+                    with sftp.open(remote_file_path, "w") as remote_file:
+                        remote_file.write(content.encode("utf-8"))
+                    print(f"업로드 성공: {remote_file_path}")
+                except Exception as e:
+                    print(f"업로드 실패: {e}")
+            sftp.close()
+            transport.close()
+        except Exception as e:
+            print(f"전체 업로드 실패: {e}")
+
+    target_ids = [
+        "AzureActiveDirectory", "AzureCloud", "AzureFrontDoor.Frontend",
+        "AzurePortal", "AzureResourceManager"
+    ]
+    if not check_sftp_log_exists(updated_date):
+        print(f"SFTP에 로그 파일 없음! IPv4 주소 추출 시작")
+        ipv4_dict = extract_ipv4_addresses(json_file_path, target_ids)
+        if ipv4_dict:
+            save_to_sftp(ipv4_dict, updated_date)
+        else:
+            print("IPv4 주소를 찾을 수 없음.")
+    else:
+        print(f"SFTP에 로그 파일이 존재하므로 실행하지 않음.")
+
+    input("Press Enter to exit")
+
+except Exception as e:
+    print(f"예외 발생: {e}")
+    input("Press Enter to exit")
