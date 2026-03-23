@@ -1,0 +1,37 @@
+#주로 마스터 이미지 OS Disk 일괄 삭제 시 사용
+
+$TargetSubs = @(
+    "구독명 1",
+    "구독명 2",
+    "구독명 3",
+    "구독명 4",
+    "구독명 5",
+    "구독명 6",
+    "구독명 7",
+    "구독명 8",
+    "구독명 9",
+    "구독명 10"
+)
+
+foreach ($sub in $TargetSubs) {
+    Set-AzContext -SubscriptionId $sub
+
+    try {
+        $TargetRGs = Get-AzResourceGroup | Where-Object {
+            $_.ResourceGroupName -like "SECDS-KRC-S-*-RG" #RG 네이밍 룰룰
+        }
+
+        foreach ($rg in $TargetRGs) {
+            $disks = Get-AzDisk -ResourceGroupName $rg.ResourceGroupName | Where-Object {
+                $_.Name -notmatch "0627|0615" #특정 숫자가 들어간 Disk를 제외한 나머지 Disk 일괄 삭제
+            }
+
+            foreach ($disk in $disks) {
+                Remove-AzDisk -ResourceGroupName $rg.ResourceGroupName -DiskName $disk.Name -Force -AsJob
+            }
+        }
+
+    } catch {
+        Write-Warning "[$sub] 오류 발생: $_"
+    }
+}
