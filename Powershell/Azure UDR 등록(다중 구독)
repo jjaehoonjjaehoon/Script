@@ -1,0 +1,35 @@
+Set-AzContext -Subscription "구독명1"
+
+Get-AzRouteTable `
+  -ResourceGroupName "리소스 그룹 이름" `
+  -Name "RT 이름" `
+  | Add-AzRouteConfig `
+  -Name "RT 내 신규 규칙 명" `
+  -AddressPrefix 0.0.0.0/32 (주소 접두사) `
+  -NextHopType "다음 홉 형식" `
+  -NextHopIpAddress 0.0.0.0(다음 홉 IP 주소소) `
+| Set-AzRouteTable
+
+Set-AzContext -Subscription "구독명2"
+
+Get-AzRouteTable `
+  -ResourceGroupName "리소스 그룹 이름" `
+  -Name "RT 이름" `
+  | Add-AzRouteConfig `
+  -Name "RT 내 신규 규칙 명" `
+  -AddressPrefix 0.0.0.0/32 (주소 접두사) `
+  -NextHopType "다음 홉 형식" `
+  -NextHopIpAddress 0.0.0.0(다음 홉 IP 주소소) `
+| Set-AzRouteTable
+
+Set-AzContext -Subscription "구독명3"
+
+Get-AzRouteTable `
+  -ResourceGroupName "리소스 그룹 이름" `
+  -Name "RT 이름" `
+  | Add-AzRouteConfig `
+  -Name "RT 내 신규 규칙 명" `
+  -AddressPrefix 0.0.0.0/32 (주소 접두사) `
+  -NextHopType "다음 홉 형식" `
+  -NextHopIpAddress 0.0.0.0(다음 홉 IP 주소소) `
+| Set-AzRouteTable
