@@ -1,0 +1,25 @@
+$SubID = "구독ID_입력"
+$RG    = "리소스그룹명_입력"
+$RT    = "경로테이블명_입력"
+$OldIP = "10.0.0.4"
+$NewIP = "10.0.1.4"
+
+# 1. 인증
+if (!(Get-AzContext)) { Connect-AzAccount }
+Set-AzContext -SubscriptionId $SubID | Out-Null
+
+# 2. 경로 테이블 로드 및 일괄 수정
+$routeTable = Get-AzRouteTable -ResourceGroupName $RG -Name $RT
+
+# 가상 어플라이언스 유형이면서 기존 IP를 가진 모든 경로를 필터링하여 IP 교체
+$targets = $routeTable.Routes | Where-Object { $_.NextHopType -eq "VirtualAppliance" -and $_.NextHopIpAddress -eq $OldIP }
+
+if ($targets) {
+    $targets | ForEach-Object { $_.NextHopIpAddress = $NewIP }
+    
+    # 변경된 객체를 Azure에 한 번에 적용 (최적화)
+    $routeTable | Set-AzRouteTable
+    Write-Host "Success: $($targets.Count) routes updated to $NewIP." -ForegroundColor Green
+} else {
+    Write-Host "No matching routes found." -ForegroundColor Yellow
+}
